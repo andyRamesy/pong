@@ -5,7 +5,7 @@ class Ball extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double diam = 50;
+    const double diam = 50;
 
     return Container(
         width: diam,

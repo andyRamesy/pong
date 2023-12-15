@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pong/ball.dart';
 import 'package:pong/bat.dart';
 
+enum Direction { up, down, left, right }
+
 class Pong extends StatefulWidget {
   const Pong({super.key});
 
@@ -10,8 +12,10 @@ class Pong extends StatefulWidget {
 }
 
 class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
-  late double width;
-  late double height;
+  Direction vDir = Direction.down;
+  Direction hDir = Direction.right;
+  double width = 0;
+  double height = 0;
   double posX = 0;
   double posY = 0;
   double batWidth = 0;
@@ -20,20 +24,41 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
   late Animation<double> animation;
   late AnimationController controller;
 
+  void checkBorders() {
+    if (posX <= 0 && hDir == Direction.left) {
+      hDir = Direction.right;
+    }
+    if (posX >= width - 50 && hDir == Direction.right) {
+      hDir = Direction.left;
+    }
+    if (posY >= height - 50 && vDir == Direction.down) {
+      vDir = Direction.up;
+    }
+    if (posY <= 0 && vDir == Direction.up) {
+      vDir = Direction.down;
+    }
+  }
+
   @override
   void initState() {
     posX = 0;
     posY = 0;
-    controller =
-        AnimationController(duration: const Duration(seconds: 3), vsync: this);
+
+    controller = AnimationController(
+        duration: const Duration(minutes: 10000), vsync: this);
+    
     animation = Tween<double>(begin: 0, end: 100).animate(controller);
+    
     animation.addListener(() {
       setState(() {
-        posX++;
-        posY++;
+        (hDir == Direction.right) ? posX += 1 : posX -= 1;
+        (vDir == Direction.down) ? posY += 1 : posY -= 1;
       });
+      checkBorders();
     });
+    
     controller.forward();
+    
     super.initState();
   }
 
