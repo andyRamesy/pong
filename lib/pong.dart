@@ -12,6 +12,7 @@ class Pong extends StatefulWidget {
 }
 
 class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
+  double increment = 10;
   Direction vDir = Direction.down;
   Direction hDir = Direction.right;
   double width = 0;
@@ -46,20 +47,26 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
 
     controller = AnimationController(
         duration: const Duration(minutes: 10000), vsync: this);
-    
+
     animation = Tween<double>(begin: 0, end: 100).animate(controller);
-    
+
     animation.addListener(() {
       setState(() {
-        (hDir == Direction.right) ? posX += 1 : posX -= 1;
-        (vDir == Direction.down) ? posY += 1 : posY -= 1;
+        (hDir == Direction.right) ? posX += increment : posX -= increment;
+        (vDir == Direction.down) ? posY += increment : posY -= increment;
       });
       checkBorders();
     });
-    
+
     controller.forward();
-    
+
     super.initState();
+  }
+
+  void moveBat(DragUpdateDetails update) {
+    setState(() {
+      batPosition += update.delta.dx;
+    });
   }
 
   @override
@@ -79,9 +86,13 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
           ),
           Positioned(
             bottom: 0,
-            child: Bat(
-              width: batWidth,
-              height: batHeight,
+            child: GestureDetector(
+              onHorizontalDragUpdate: (DragUpdateDetails update) =>
+                  moveBat(update),
+              child: Bat(
+                width: batWidth,
+                height: batHeight,
+              ),
             ),
           )
         ],
