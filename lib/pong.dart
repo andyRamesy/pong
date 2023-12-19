@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pong/ball.dart';
 import 'package:pong/bat.dart';
@@ -12,6 +14,9 @@ class Pong extends StatefulWidget {
 }
 
 class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
+  int score = 0;
+  double randomX = 1;
+  double randomY = 1;
   double increment = 10;
   Direction vDir = Direction.down;
   Direction hDir = Direction.right;
@@ -25,28 +30,70 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
   late Animation<double> animation;
   late AnimationController controller;
 
+  double randomNumber() {
+    //random between 0.5 and 1.5
+    var random = Random();
+    int num = random.nextInt(101);
+    return (50 + num) / 100;
+  }
+
   void checkBorders() {
     double diameter = 50;
-    if(posY >= height - diameter - batHeight && vDir == Direction.down){
-      if(posX >= (batPosition - diameter ) && posX <= (batPosition + batWidth + diameter)){
-        vDir = Direction.up;
-      }else{
-        controller.stop();
-        dispose();
-      }
-    }
     if (posX <= 0 && hDir == Direction.left) {
       hDir = Direction.right;
+      randomX = randomNumber();
     }
     if (posX >= width - diameter && hDir == Direction.right) {
       hDir = Direction.left;
+      randomX = randomNumber();
     }
-    // if (posY >= height - 50 && vDir == Direction.down) {
-    //   vDir = Direction.up;
-    // }
+    if (posY >= height - diameter - batHeight && vDir == Direction.down) {
+      if (posX >= (batPosition - diameter) &&
+          posX <= (batPosition + batWidth + diameter)) {
+        vDir = Direction.up;
+        randomY = randomNumber();
+        safeSetState(() {
+          score++;
+        });
+      } else {
+        controller.stop();
+        showMessage(context);
+      }
+    }
     if (posY <= 0 && vDir == Direction.up) {
       vDir = Direction.down;
+      randomY = randomNumber();
     }
+  }
+
+  void showMessage(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Game overrrr"),
+            content: const Text("Would you like to play again?"),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      posX = 0;
+                      posY = 0;
+                      score = 0;
+                    });
+                    Navigator.of(context).pop();
+                    controller.repeat();
+                  },
+                  child: const Text("Yes")),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    dispose();
+                  },
+                  child: const Text("No"))
+            ],
+          );
+        });
   }
 
   @override
@@ -61,8 +108,12 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
 
     animation.addListener(() {
       safeSetState(() {
-        (hDir == Direction.right) ? posX += increment : posX -= increment;
-        (vDir == Direction.down) ? posY += increment : posY -= increment;
+        (hDir == Direction.right)
+            ? posX += ((increment * randomX)).round()
+            : posX -= ((increment * randomX)).round();
+        (vDir == Direction.down)
+            ? posY += ((increment * randomY)).round()
+            : posY -= ((increment * randomY)).round();
       });
       checkBorders();
     });
@@ -78,8 +129,8 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
     });
   }
 
-  void safeSetState(Function function){
-    if(mounted && controller.isAnimating){
+  void safeSetState(Function function) {
+    if (mounted && controller.isAnimating) {
       setState(() {
         function();
       });
@@ -102,6 +153,7 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
       batHeight = height / 20;
       return Stack(
         children: <Widget>[
+          Positioned(top: 0, right: 24, child: Text("Score : $score")),
           Positioned(
             top: posY,
             left: posX,
